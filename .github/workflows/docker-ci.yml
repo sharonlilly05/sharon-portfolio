@@ -1,0 +1,33 @@
+name: Build and Push Docker Image
+
+# Trigger the pipeline automatically whenever a push happens on the main branch
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Pull the latest code from your repository into the runner environment
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Step 2: Authenticate with Docker Hub using your saved secrets
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    # Step 3: Automatically build and push your portfolio website image
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: |
+          ${{ secrets.DOCKERHUB_USERNAME }}/portfolio-website:latest
+          ${{ secrets.DOCKERHUB_USERNAME }}/portfolio-website:${{ github.sha }}
