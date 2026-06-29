@@ -1,128 +1,116 @@
-# Portfolio Website Deployment (Task 2)
+# Portfolio Website CI/CD with Docker Hub (Task 3)
 
-This project is a Dockerized Cloud & DevOps portfolio website ready for local testing, GitHub push, and AWS EC2 deployment.
+This project demonstrates a simple Docker-based CI/CD workflow using GitHub Actions. Every push to the repository triggers a pipeline that builds a Docker image, logs in to Docker Hub, and pushes the image for deployment.
 
-## Project files
+## Objective
 
-- `index.html` — portfolio landing page
-- `style.css` — responsive styling and layout
-- `Dockerfile` — Docker image build instructions
-- `.dockerignore` — files excluded from the Docker build
-- `assets/` — optional site assets folder
-- `images/` — optional images folder
+Task 3 focuses on automating the Docker image workflow so that the application can be built and published consistently without manual steps. This improves reliability, reduces human error, and prepares the project for repeatable deployment.
 
-## Phase 1: Prepare your website
+## Prerequisites
 
-Your project is already ready. The website uses:
-- `index.html`
-- `style.css`
+Before starting this task, make sure you have:
 
-To match the Task 2 checklist, empty folders `assets/` and `images/` are included.
+- Completed Task 2 successfully
+- Run the Docker container manually on AWS EC2
+- Pushed the project repository to GitHub
+- A Docker Hub account
 
-## Phase 2: Dockerize the website
+## Project Files
 
-Create the Docker image inside the project folder:
+- index.html — portfolio landing page
+- style.css — website styling
+- Dockerfile — instructions to build the Docker image
+- .github/workflows/docker-ci.yml — GitHub Actions workflow for CI/CD
+
+## CI/CD Workflow
+
+The repository uses GitHub Actions to automate the following steps on every push:
+
+1. Build the Docker image
+2. Log in to Docker Hub securely using GitHub Secrets
+3. Push the image to Docker Hub
+4. Keep the image ready for deployment
+
+## Required GitHub Secrets
+
+In your GitHub repository, add these secrets:
+
+- DOCKER_USERNAME — your Docker Hub username
+- DOCKER_PASSWORD — your Docker Hub password or access token
+
+These secrets must be used instead of hardcoded credentials.
+
+## Workflow File
+
+Create the workflow file at .github/workflows/docker-ci.yml with a structure like this:
+
+```yaml
+name: Docker CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/portfolio-website:latest
+```
+
+## Local Docker Commands
+
+Build and test locally before pushing:
 
 ```bash
 docker build -t portfolio-website .
-```
-
-Check the image:
-
-```bash
-docker images
-```
-
-Run the container locally:
-
-```bash
 docker run -d -p 8080:80 portfolio-website
 ```
 
-Open the site in your browser:
-
-```text
-http://localhost:8080
-```
-
-If the site appears, the Docker part is complete.
-
-## Phase 3: Push code to GitHub
-
-1. Create a repository named `portfolio-website` on GitHub.
-2. Run these commands inside the project folder:
+Verify the running container:
 
 ```bash
-git init
-git add .
-git commit -m "Initial commit"
-git branch -M main
-git remote add origin https://github.com/sharonlilly05/portfolio-website.git
-git push -u origin main
+docker ps
 ```
 
-Replace the GitHub URL if your repo has a different name or account.
+## Verification
 
-## Phase 4: AWS EC2 deployment
+After pushing to GitHub:
 
-1. Launch an AWS EC2 instance:
-   - Ubuntu
-   - t2.micro
-   - Allow HTTP (port 80)
-   - Allow SSH (port 22)
-2. Connect to the instance:
+1. Open the GitHub Actions tab
+2. Confirm that the workflow run succeeds
+3. Pull and run the image from Docker Hub to verify it works:
 
 ```bash
-ssh -i your-key.pem ubuntu@PUBLIC_IP
-```
-
-3. Install Docker on EC2:
-
-```bash
-sudo apt update
-sudo apt install docker.io -y
-sudo systemctl start docker
-sudo systemctl enable docker
-```
-
-(Optional) Add the `ubuntu` user to the Docker group:
-
-```bash
-sudo usermod -aG docker ubuntu
-```
-
-4. Clone your GitHub repository on EC2:
-
-```bash
-git clone https://github.com/sharonlilly05/portfolio-website.git
-cd portfolio-website
-```
-
-5. Build and run the Docker image on EC2:
-
-```bash
-docker build -t portfolio-website .
-docker run -d -p 80:80 portfolio-website
-```
-
-6. Open the live site in your browser:
-
-```text
-http://PUBLIC_IP
+docker pull <your-dockerhub-username>/portfolio-website:latest
+docker run -d -p 8080:80 <your-dockerhub-username>/portfolio-website:latest
 ```
 
 ## Deliverables
 
-1. `Dockerfile`
-2. GitHub repo link: `https://github.com/sharonlilly05/portfolio-website`
-3. Screenshot of `docker ps` showing the running container
-4. Screenshot of `http://PUBLIC_IP` showing the live website
-5. `README.md`
+Submit the following:
 
-## Commands used
+- GitHub repository containing the CI workflow
+- Screenshot of a successful GitHub Actions run
+- Link to the Docker Hub image
+- Updated README explaining the CI process
 
-```bash
-docker build -t portfolio-website .
-docker run -d -p 8080:80 portfolio-website
-docker run -d -p 80:80 portfolio-website
-```
+## Notes
+
+This README documents the automation process for Task 3 and should be updated if the workflow or deployment steps change.
